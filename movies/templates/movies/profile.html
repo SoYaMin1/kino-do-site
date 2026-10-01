@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+
+<!-- Шапка профиля -->
+<div class="card p-4 mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+            {% if profile_obj.avatar %}
+                <img src="{{ profile_obj.avatar.url }}" 
+                     class="rounded-circle border border-3 border-secondary"
+                     width="150" height="150" style="object-fit: cover;">
+            {% else %}
+                <i class="bi bi-person-circle" style="font-size: 150px; color: #555;"></i>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h1 class="mb-1">
+                {{ user.first_name }} {{ user.last_name }}
+                {% if not user.first_name and not user.last_name %}@{{ user.username }}{% endif %}
+            </h1>
+            <p class="text-muted mb-2">@{{ user.username }}</p>
+            {% if user.email %}
+                <p class="mb-1"><i class="bi bi-envelope"></i> {{ user.email }}</p>
+            {% endif %}
+            {% if profile_obj.phone %}
+                <p class="mb-1"><i class="bi bi-telephone"></i> {{ profile_obj.phone }}</p>
+            {% endif %}
+            {% if profile_obj.birth_date %}
+                <p class="mb-1"><i class="bi bi-calendar-heart"></i> {{ profile_obj.birth_date|date:"d.m.Y" }}</p>
+            {% endif %}
+            {% if profile_obj.bio %}
+                <p class="mt-2 mb-0 text-muted fst-italic">{{ profile_obj.bio }}</p>
+            {% endif %}
+        </div>
+        <div class="col-md-3 text-md-end mt-3 mt-md-0">
+            <a href="{% url 'movies:edit_profile' %}" class="btn btn-primary">
+                <i class="bi bi-pencil-square"></i> Редактировать
+            </a>
+            <p class="small text-muted mt-2 mb-0">
+                С нами с {{ user.date_joined|date:"d.m.Y" }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row g-3 mb-5">
+    <div class="col-6 col-md-3">
+        <a href="{% url 'movies:my_reviews' %}" class="text-decoration-none">
+            <div class="card p-3 text-center h-100">
+                <i class="bi bi-chat-left-text fs-1 text-primary"></i>
+                <h3 class="mt-2 mb-0">{{ reviews_count }}</h3>
+                <p class="text-muted mb-0">Отзывов</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{% url 'movies:favorites' %}" class="text-decoration-none">
+            <div class="card p-3 text-center h-100">
+                <i class="bi bi-heart-fill fs-1 text-danger"></i>
+                <h3 class="mt-2 mb-0">{{ favorites_count }}</h3>
+                <p class="text-muted mb-0">В избранном</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{% url 'movies:watched' %}" class="text-decoration-none">
+            <div class="card p-3 text-center h-100">
+                <i class="bi bi-eye-fill fs-1" style="color:#f0ad4e"></i>
+                <h3 class="mt-2 mb-0">{{ watched_count }}</h3>
+                <p class="text-muted mb-0">Просмотрено</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{% url 'movies:my_tickets' %}" class="text-decoration-none">
+            <div class="card p-3 text-center h-100">
+                <i class="bi bi-ticket-perforated fs-1" style="color:#5bc0de"></i>
+                <h3 class="mt-2 mb-0">{{ tickets_count }}</h3>
+                <p class="text-muted mb-0">Билетов</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Последние отзывы -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <h3>Последние отзывы</h3>
+        {% for review in recent_reviews %}
+            <div class="card p-3 mb-2">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ review.movie.get_absolute_url }}">
+                        <strong>{{ review.movie.title }}</strong>
+                    </a>
+                    <span class="rating-badge">{{ review.rating }}/10</span>
+                </div>
+                <p class="mb-1 small text-muted">{{ review.created_at|date:"d.m.Y" }}</p>
+                <p class="mb-0 small">{{ review.text|truncatewords:15 }}</p>
+            </div>
+        {% empty %}
+            <p class="text-muted">Ещё нет отзывов</p>
+        {% endfor %}
+    </div>
+
+    <div class="col-md-6">
+        <h3>Недавно в избранном</h3>
+        <div class="row g-2">
+            {% for fav in recent_favorites %}
+                <div class="col-4">
+                    <a href="{{ fav.movie.get_absolute_url }}">
+                        <img src="{{ fav.movie.poster.url }}" class="img-fluid rounded" alt="{{ fav.movie.title }}">
+                        <p class="small mt-1 mb-0">{{ fav.movie.title|truncatechars:20 }}</p>
+                    </a>
+                </div>
+            {% empty %}
+                <p class="text-muted">Избранное пустое</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

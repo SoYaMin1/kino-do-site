@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}{{ movie.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        {% if movie.poster %}
+            <img src="{{ movie.poster.url }}" class="img-fluid rounded shadow" alt="{{ movie.title }}">
+        {% endif %}
+    </div>
+    <div class="col-md-8">
+        <h1>{{ movie.title }} <span class="text-muted">({{ movie.year }})</span></h1>
+        <div class="mb-3">
+            {% for genre in movie.genres.all %}
+                <a href="{% url 'movies:genre_detail' genre.slug %}" class="badge badge-genre text-decoration-none">{{ genre.name }}</a>
+            {% endfor %}
+        </div>
+        <p><strong>Режиссёр:</strong> {{ movie.director }}</p>
+        <p><strong>Страна:</strong> {{ movie.country }}</p>
+        <p><strong>Длительность:</strong> {{ movie.duration }} мин.</p>
+        <p><span class="rating-badge fs-5">★ {{ movie.rating }}/10</span></p>
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            {% if user.is_authenticated %}
+                <a href="{% url 'movies:movie_buy_ticket' movie.slug %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-ticket-perforated"></i> Купить билет
+                </a>
+            {% else %}
+                <a href="{% url 'movies:login' %}?next={% url 'movies:movie_buy_ticket' movie.slug %}" 
+                   class="btn btn-primary btn-lg">
+                    <i class="bi bi-ticket-perforated"></i> Купить билет
+                </a>
+            {% endif %}
+
+            {% if movie.video_url %}
+                <a href="{{ movie.video_url }}" target="_blank" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-play-fill"></i> Трейлер
+                </a>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'movies:toggle_favorite' movie.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="btn {% if is_favorite %}btn-danger{% else %}btn-outline-danger{% endif %} btn-lg">
+                        <i class="bi bi-heart{% if is_favorite %}-fill{% endif %}"></i>
+                    </button>
+                </form>
+                <form method="post" action="{% url 'movies:toggle_watched' movie.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="btn {% if is_watched %}btn-warning{% else %}btn-outline-warning{% endif %} btn-lg">
+                        <i class="bi bi-eye{% if is_watched %}-fill{% endif %}"></i>
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+        <h3 class="mt-4">Описание</h3>
+        <p>{{ movie.description|linebreaks }}</p>
+    </div>
+</div>
+
+<!-- Сеансы по кинотеатрам -->
+{% if showtimes_by_cinema %}
+<div class="mt-5">
+    <h3><i class="bi bi-calendar-event"></i> Ближайшие сеансы</h3>
+    {% for cinema, showtimes in showtimes_by_cinema.items %}
+    <div class="card p-3 mb-3 mt-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+                <h5 class="mb-1"><i class="bi bi-building"></i> {{ cinema.name }}</h5>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-geo-alt"></i> {{ cinema.city }}, {{ cinema.address }}
+                </p>
+            </div>
+            {% if cinema.twogis_url %}
+                <a href="{{ cinema.twogis_url }}" target="_blank" rel="noopener" 
+                   class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-map"></i> 2ГИС
+                </a>
+            {% endif %}
+        </div>
+        <div class="row g-2 mt-2">
+            {% for st in showtimes %}
+            <div class="col-md-4">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'movies:buy_ticket' st.pk %}" class="text-decoration-none">
+                {% else %}
+                    <a href="{% url 'movies:login' %}?next={% url 'movies:buy_ticket' st.pk %}" class="text-decoration-none">
+                {% endif %}
+                    <div class="card p-2" style="background:#2a2a2a;">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ st.datetime|date:"d.m H:i" }}</strong>
+                            <span class="rating-badge">{{ st.price }} сом</span>
+                        </div>
+                        <small class="text-muted">
+                            {{ st.hall }} • Свободно: {{ st.available_seats }}/{{ st.total_seats }}
+                        </small>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Отзывы -->
+<div class="mt-5">
+    <h3>Отзывы ({{ reviews.count }})</h3>
+    <div class="row">
+        <div class="col-md-6">
+            {% for review in reviews %}
+            <div class="card mb-3 p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center">
+                        {% if review.user.profile.avatar %}
+                            <img src="{{ review.user.profile.avatar.url }}" 
+                                 class="rounded-circle me-2" width="36" height="36" style="object-fit:cover;">
+                        {% else %}
+                            <i class="bi bi-person-circle fs-3 me-2"></i>
+                        {% endif %}
+                        <strong>{{ review.user.username|default:"Гость" }}</strong>
+                    </div>
+                    <span class="rating-badge">{{ review.rating }}/10</span>
+                </div>
+                <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                <p class="mt-2 mb-0">{{ review.text }}</p>
+            </div>
+            {% empty %}
+                <p class="text-muted">Пока нет отзывов. Будьте первым!</p>
+            {% endfor %}
+        </div>
+
+        <div class="col-md-6">
+            {% if user.is_authenticated %}
+                {% if can_review %}
+                <div class="card p-3">
+                    <h5>Оставить отзыв</h5>
+                    <form method="post" action="{% url 'movies:add_review' movie.slug %}">
+                        {% csrf_token %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary">Отправить</button>
+                    </form>
+                </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        Вы уже оставляли отзыв к этому фильму 👍
+                        <a href="{% url 'movies:my_reviews' %}" class="alert-link">Мои отзывы</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="card p-4 text-center">
+                    <h5>Хотите оставить отзыв?</h5>
+                    <p class="text-muted">Войдите или зарегистрируйтесь</p>
+                    <div>
+                        <a href="{% url 'movies:login' %}?next={{ request.path }}" class="btn btn-primary">Войти</a>
+                        <a href="{% url 'movies:register' %}" class="btn btn-outline-light">Регистрация</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Похожие -->
+{% if similar_movies %}
+<h3 class="mt-5">Похожие фильмы</h3>
+<div class="row g-3">
+    {% for m in similar_movies %}
+    <div class="col-6 col-md-3 col-lg-2">
+        <a href="{{ m.get_absolute_url }}">
+            <img src="{{ m.poster.url }}" class="img-fluid rounded" alt="{{ m.title }}">
+        </a>
+        <p class="small mt-1 mb-0">{{ m.title }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

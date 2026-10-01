@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Покупка билета{% endblock %}
+
+{% block content %}
+<a href="{{ showtime.movie.get_absolute_url }}" class="btn btn-outline-light btn-sm mb-3">
+    <i class="bi bi-arrow-left"></i> К фильму
+</a>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card p-3">
+            <div class="d-flex">
+                <img src="{{ showtime.movie.poster.url }}" alt="{{ showtime.movie.title }}"
+                     style="width: 100px; height: 150px; object-fit: cover;" class="rounded me-3">
+                <div>
+                    <h4>{{ showtime.movie.title }}</h4>
+                    <p class="text-muted mb-1">{{ showtime.movie.year }} • {{ showtime.movie.duration }} мин.</p>
+                    <p class="mb-0">
+                        <i class="bi bi-geo-alt-fill text-primary"></i> {{ showtime.cinema.name }}<br>
+                        <small class="text-muted">{{ showtime.cinema.address }}</small>
+                    </p>
+                    {% if showtime.cinema.twogis_url %}
+                        <a href="{{ showtime.cinema.twogis_url }}" target="_blank" 
+                           class="btn btn-sm btn-outline-info mt-2">
+                            <i class="bi bi-map"></i> Открыть в 2ГИС
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <p class="mb-1"><i class="bi bi-calendar-event"></i> {{ showtime.datetime|date:"d.m.Y, H:i" }}</p>
+            <p class="mb-1"><i class="bi bi-door-open"></i> {{ showtime.hall }}</p>
+            <p class="mb-0"><i class="bi bi-cash-coin text-success"></i> <strong>{{ showtime.price }} сом</strong></p>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card p-4">
+            <h4 class="mb-3">Выберите место</h4>
+            <p class="text-muted small">Экран ↓</p>
+            <div class="seat-grid mb-3">
+                {% with seats=showtime.total_seats %}
+                    {% for i in "x"|rjust:seats|make_list %}
+                        {% with forloop.counter as num %}
+                            <div class="seat {% if num in booked_seats %}taken{% endif %}"
+                                 data-seat="{{ num }}"
+                                 {% if num in booked_seats %}title="Занято"{% endif %}>
+                                {{ num }}
+                            </div>
+                        {% endwith %}
+                    {% endfor %}
+                {% endwith %}
+            </div>
+
+            <form method="post" id="ticketForm">
+                {% csrf_token %}
+                <input type="hidden" name="seat_number" id="seatInput">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Номер места</label>
+                        <input type="text" id="seatDisplay" class="form-control" readonly
+                               placeholder="Нажмите на место в зале выше">
+                    </div>
+                </div>
+
+                <h5 class="mt-4 mb-3"><i class="bi bi-credit-card"></i> Оплата картой</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.card_number.label }}</label>
+                    {{ form.card_number }}
+                    {% if form.card_number.errors %}
+                        <div class="text-danger small mt-1">{{ form.card_number.errors|striptags }}</div>
+                    {% endif %}
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-info-circle"></i> Это симуляция оплаты — введите любые 16 цифр
+                    </small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-shield-lock"></i> Оплатить {{ showtime.price }} сом
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Клик по месту — подставляем номер
+    document.querySelectorAll('.seat').forEach(function(seat) {
+        seat.addEventListener('click', function() {
+            if (this.classList.contains('taken')) return;
+            document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('seatInput').value = this.dataset.seat;
+            document.getElementById('seatDisplay').value = 'Место ' + this.dataset.seat;
+        });
+    });
+
+    // Форматирование номера карты (разбивка на группы по 4)
+    const cardInput = document.querySelector('input[name="card_number"]');
+    if (cardInput) {
+        cardInput.addEventListener('input', function(e) {
+            let v = this.value.replace(/\D/g, '').slice(0, 16);
+            this.value = v.replace(/(.{4})/g, '$1 ').trim();
+        });
+    }
+
+    // Запрет отправки без выбора места
+    document.getElementById('ticketForm').addEventListener('submit', function(e) {
+        if (!document.getElementById('seatInput').value) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите место в зале');
+        }
+    });
+</script>
+{% endblock %}

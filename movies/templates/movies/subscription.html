@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Подписка — Kino-Do{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title mb-0">
+        <i class="bi bi-star-fill"></i> Подписка
+    </h1>
+    <a href="{% url 'movies:profile' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+</div>
+
+<!-- Текущая подписка -->
+{% if subscription.is_valid %}
+<div class="card static p-4 mb-4" style="border-left: 4px solid #28a745;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-patch-check-fill text-success"></i>
+                {{ subscription.get_plan_display }}
+            </h4>
+            <p class="mb-0">
+                Активна до: <strong style="color:#fff;">{{ subscription.expires_at|date:"d.m.Y H:i" }}</strong>
+            </p>
+            <p class="mb-0">Осталось дней: <strong style="color:#fff;">{{ subscription.days_left }}</strong></p>
+        </div>
+        <span class="badge bg-success fs-6">Активна</span>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-info-circle"></i> У вас нет активной подписки. Выберите тариф ниже.
+</div>
+{% endif %}
+
+<!-- Тарифы -->
+<h3 class="mb-3" style="color:#fff;">Тарифы</h3>
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card plan-card p-4 h-100 text-center">
+            <h4 class="text-primary">Базовая</h4>
+            <h2 class="my-3">500 <small class="fs-6">сом/мес</small></h2>
+            <ul class="list-unstyled text-start mb-3">
+                <li><i class="bi bi-check-circle-fill text-success"></i> Скидка 10% на билеты</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> Без рекламы</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> HD качество</li>
+            </ul>
+            <a href="{% url 'movies:subscription_pay' %}?plan=basic" 
+               class="btn btn-primary mt-auto">Выбрать</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card plan-card p-4 h-100 text-center" style="border: 2px solid #e50914 !important;">
+            <span class="badge bg-danger mb-2">Популярный</span>
+            <h4 class="text-primary">Премиум</h4>
+            <h2 class="my-3">1200 <small class="fs-6">сом/мес</small></h2>
+            <ul class="list-unstyled text-start mb-3">
+                <li><i class="bi bi-check-circle-fill text-success"></i> Скидка 25% на билеты</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> Без рекламы</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> 4K качество</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> Приоритетная поддержка</li>
+            </ul>
+            <a href="{% url 'movies:subscription_pay' %}?plan=premium" 
+               class="btn btn-primary mt-auto">Выбрать</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card plan-card p-4 h-100 text-center">
+            <h4 class="text-primary">VIP</h4>
+            <h2 class="my-3">2500 <small class="fs-6">сом/мес</small></h2>
+            <ul class="list-unstyled text-start mb-3">
+                <li><i class="bi bi-check-circle-fill text-success"></i> Бесплатные билеты (2/мес)</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> Скидка 50% на остальные</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> Без рекламы</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> VIP-поддержка 24/7</li>
+            </ul>
+            <a href="{% url 'movies:subscription_pay' %}?plan=vip" 
+               class="btn btn-primary mt-auto">Выбрать</a>
+        </div>
+    </div>
+</div>
+
+<!-- История платежей -->
+{% if payments %}
+<h3 class="mb-3" style="color:#fff;">История платежей</h3>
+<div class="card static">
+    <table class="table table-dark table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Код</th>
+                <th>Тариф</th>
+                <th>Сумма</th>
+                <th>Карта</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in payments %}
+            <tr>
+                <td><code style="color:#e50914;">{{ p.code }}</code></td>
+                <td>{{ p.get_plan_display|default:p.plan }}</td>
+                <td>{{ p.amount }} сом</td>
+                <td>**** {{ p.card_last4 }}</td>
+                <td>{{ p.paid_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

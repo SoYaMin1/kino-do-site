@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Мои билеты{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-ticket-perforated"></i> Мои билеты</h1>
+    <a href="{% url 'movies:profile' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+</div>
+
+{% for ticket in tickets %}
+<div class="card ticket-card mb-3 p-3 {% if ticket.status == 'cancelled' %}opacity-50{% endif %}">
+    <div class="row align-items-center">
+        <div class="col-md-2 text-center">
+            <img src="{{ ticket.showtime.movie.poster.url }}" alt="{{ ticket.showtime.movie.title }}"
+                 style="width: 80px; height: 120px; object-fit: cover;" class="rounded">
+        </div>
+        <div class="col-md-6">
+            <h5 class="mb-1">{{ ticket.showtime.movie.title }}</h5>
+            <p class="text-muted mb-1">
+                <i class="bi bi-calendar-event"></i>
+                {{ ticket.showtime.datetime|date:"d.m.Y, H:i" }}
+            </p>
+            <p class="text-muted mb-1">
+                <i class="bi bi-geo-alt-fill"></i>
+                {{ ticket.showtime.cinema.name }} — {{ ticket.showtime.hall }}
+            </p>
+            <p class="mb-0">
+                <strong>Место: {{ ticket.seat_number }}</strong> •
+                Цена: {{ ticket.showtime.price }} сом
+                {% if ticket.card_last4 %}
+                    • Карта: ****{{ ticket.card_last4 }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <p class="mb-1 text-muted small">Код билета:</p>
+            <p class="ticket-code mb-2">{{ ticket.code }}</p>
+            <p class="mb-2">
+                {% if ticket.status == 'paid' %}
+                    <span class="badge bg-success">Оплачен</span>
+                {% elif ticket.status == 'booked' %}
+                    <span class="badge bg-warning text-dark">Забронирован</span>
+                {% else %}
+                    <span class="badge bg-secondary">Отменён</span>
+                {% endif %}
+            </p>
+            {% if ticket.status != 'cancelled' %}
+                <form method="post" action="{% url 'movies:cancel_ticket' ticket.pk %}"
+                      onsubmit="return confirm('Отменить билет?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-circle"></i> Отменить
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-5">
+    <i class="bi bi-ticket-perforated" style="font-size: 4rem; color: #444;"></i>
+    <p class="text-muted mt-3">У вас пока нет билетов</p>
+    <a href="{% url 'movies:showtimes' %}" class="btn btn-primary">Купить билет</a>
+</div>
+{% endfor %}
+{% endblock %}

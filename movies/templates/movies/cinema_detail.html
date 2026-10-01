@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}{{ cinema.name }} — Kino-Do{% endblock %}
+
+{% block content %}
+<a href="{% url 'movies:cinema_list' %}" class="btn btn-outline-light btn-sm mb-3">
+    <i class="bi bi-arrow-left"></i> К кинотеатрам
+</a>
+
+<div class="card cinema-card mb-4 overflow-hidden">
+    {% if cinema.photo %}
+        <img src="{{ cinema.photo.url }}" alt="{{ cinema.name }}"
+             style="width: 100%; height: 320px; object-fit: cover;">
+    {% endif %}
+    <div class="p-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-building"></i> {{ cinema.name }}
+                </h1>
+                <p class="mb-1">
+                    <i class="bi bi-geo-alt-fill"></i> 
+                    {{ cinema.city }}, {{ cinema.address }}
+                </p>
+                {% if cinema.phone %}
+                    <p class="mb-1">
+                        <i class="bi bi-telephone-fill"></i> {{ cinema.phone }}
+                    </p>
+                {% endif %}
+                {% if cinema.description %}
+                    <p class="mt-3 mb-0">{{ cinema.description }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                {% if cinema.twogis_url %}
+                    <a href="{{ cinema.twogis_url }}" target="_blank" rel="noopener" 
+                       class="btn btn-info">
+                        <i class="bi bi-map-fill"></i> Открыть в 2ГИС
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="mb-3" style="color:#fff;">
+    <i class="bi bi-calendar3" style="color:#e50914;"></i> Расписание сеансов
+</h3>
+
+{% for date, showtimes in showtimes_by_date.items %}
+<div class="mb-4">
+    <h5 class="mb-3" style="color:#e50914;">
+        <i class="bi bi-calendar-day"></i> {{ date|date:"d.m.Y (l)" }}
+    </h5>
+    <div class="row g-3">
+        {% for st in showtimes %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3">
+                <div class="d-flex">
+                    <img src="{{ st.movie.poster.url }}" alt="{{ st.movie.title }}"
+                         style="width: 60px; height: 90px; object-fit: cover;" class="rounded me-3">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            <a href="{{ st.movie.get_absolute_url }}">{{ st.movie.title }}</a>
+                        </h6>
+                        <p class="small mb-1">
+                            <i class="bi bi-clock"></i> {{ st.datetime|date:"H:i" }} 
+                            • {{ st.hall }}
+                        </p>
+                        <p class="small mb-2">
+                            <span class="text-success fw-bold">{{ st.price }} сом</span>
+                            • Свободно: {{ st.available_seats }}/{{ st.total_seats }}
+                        </p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'movies:buy_ticket' st.pk %}" class="btn btn-sm btn-primary w-100">
+                                <i class="bi bi-ticket-perforated"></i> Купить
+                            </a>
+                        {% else %}
+                            <a href="{% url 'movies:login' %}?next={% url 'movies:buy_ticket' st.pk %}" 
+                               class="btn btn-sm btn-outline-light w-100">Войдите</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-5">
+    <i class="bi bi-calendar-x" style="font-size: 4rem; color: #444;"></i>
+    <p class="mt-3">Ближайших сеансов нет</p>
+</div>
+{% endfor %}
+{% endblock %}

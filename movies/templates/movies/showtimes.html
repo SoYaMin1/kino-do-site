@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Ближайшие сеансы{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-calendar-event"></i> Ближайшие сеансы</h1>
+
+{% regroup showtimes by datetime|date:"d.m.Y" as day_list %}
+
+{% for day in day_list %}
+    <h4 class="mt-4 mb-3 text-primary">{{ day.grouper }}</h4>
+    <div class="row g-3">
+        {% for showtime in day.list %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <div class="d-flex">
+                    <img src="{{ showtime.movie.poster.url }}" alt="{{ showtime.movie.title }}"
+                         style="width: 70px; height: 105px; object-fit: cover;" class="rounded me-3">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            <a href="{{ showtime.movie.get_absolute_url }}">{{ showtime.movie.title }}</a>
+                        </h6>
+                        <p class="small text-muted mb-1">{{ showtime.movie.year }}</p>
+                        <p class="small mb-1">
+                            <i class="bi bi-clock"></i> {{ showtime.datetime|date:"H:i" }}
+                        </p>
+                        <p class="small mb-1">
+                            <i class="bi bi-geo-alt"></i> {{ showtime.cinema.name }}
+                        </p>
+                        <p class="small mb-2">
+                            <i class="bi bi-door-open"></i> {{ showtime.hall }} • 
+                            <span class="text-success">{{ showtime.price }} сом</span>
+                        </p>
+                        <p class="small mb-2 text-muted">
+                            Свободно: {{ showtime.available_seats }}/{{ showtime.total_seats }}
+                        </p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'movies:buy_ticket' showtime.pk %}" class="btn btn-sm btn-primary w-100">
+                                <i class="bi bi-ticket-perforated"></i> Купить
+                            </a>
+                        {% else %}
+                            <a href="{% url 'movies:login' %}?next={% url 'movies:buy_ticket' showtime.pk %}" 
+                               class="btn btn-sm btn-outline-light w-100">
+                                Войдите, чтобы купить
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% empty %}
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x" style="font-size: 4rem; color: #444;"></i>
+        <p class="text-muted mt-3">Ближайших сеансов нет</p>
+    </div>
+{% endfor %}
+{% endblock %}

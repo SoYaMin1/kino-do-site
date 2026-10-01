@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Оплата подписки{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <a href="{% url 'movies:subscription' %}" class="btn btn-outline-light btn-sm mb-3">
+            <i class="bi bi-arrow-left"></i> К тарифам
+        </a>
+
+        <div class="card p-4">
+            <h3 class="mb-3"><i class="bi bi-credit-card-2-front"></i> Оплата подписки</h3>
+
+            <div class="alert alert-info">
+                <strong>{{ plan_label }}</strong> — {{ price }} сом / 30 дней
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-4">
+                    <label class="form-label d-block mb-2">Выберите тариф</label>
+                    {% for radio in form.plan %}
+                        <div class="form-check mb-2">
+                            {{ radio.tag }}
+                            <label class="form-check-label ms-2" for="{{ radio.id_for_label }}">
+                                {{ radio.choice_label }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.card_number.label }}</label>
+                    {{ form.card_number }}
+                    {% if form.card_number.errors %}
+                        <div class="text-danger small mt-1">{{ form.card_number.errors|striptags }}</div>
+                    {% endif %}
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-info-circle"></i> Это симуляция оплаты — введите любые 16 цифр
+                    </small>
+                </div>
+
+                <div class="card p-3 mb-3" style="background:#2a2a2a;">
+                    <div class="d-flex justify-content-between">
+                        <span>К оплате:</span>
+                        <strong class="text-success fs-5">{{ price }} сом</strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-shield-lock"></i> Оплатить
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Форматирование номера карты
+    const cardInput = document.querySelector('input[name="card_number"]');
+    if (cardInput) {
+        cardInput.addEventListener('input', function(e) {
+            let v = this.value.replace(/\D/g, '').slice(0, 16);
+            this.value = v.replace(/(.{4})/g, '$1 ').trim();
+        });
+    }
+</script>
+{% endblock %}

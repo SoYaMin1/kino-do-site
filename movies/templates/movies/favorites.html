@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Избранное{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-heart-fill text-danger"></i> Избранное</h1>
+    <a href="{% url 'movies:profile' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+</div>
+
+<div class="row g-4">
+    {% for fav in favorites %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <div class="card h-100">
+            <a href="{{ fav.movie.get_absolute_url }}">
+                <img src="{{ fav.movie.poster.url }}" class="card-img-top" 
+                     style="height: 380px; object-fit: cover;" alt="{{ fav.movie.title }}">
+            </a>
+            <div class="card-body d-flex flex-column">
+                <h6 class="card-title">{{ fav.movie.title }}</h6>
+                <p class="text-muted small mb-2">{{ fav.movie.year }}</p>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="rating-badge">{{ fav.movie.rating }}</span>
+                    <form method="post" action="{% url 'movies:toggle_favorite' fav.movie.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Убрать из избранного">
+                            <i class="bi bi-heartbreak"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-heart" style="font-size: 4rem; color: #444;"></i>
+        <p class="text-muted mt-3">В избранном пока пусто</p>
+        <a href="{% url 'movies:movie_list' %}" class="btn btn-primary">Найти фильмы</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

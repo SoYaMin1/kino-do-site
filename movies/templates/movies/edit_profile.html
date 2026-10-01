@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-pencil-square"></i> Редактировать профиль</h1>
+            <a href="{% url 'movies:profile' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Назад
+            </a>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Аватар -->
+            <div class="card p-4 mb-3">
+                <h5 class="mb-3">Аватар</h5>
+                <div class="d-flex align-items-center gap-4">
+                    <div>
+                        {% if profile_obj.avatar %}
+                            <img src="{{ profile_obj.avatar.url }}" id="avatarPreview"
+                                 class="rounded-circle border border-2 border-secondary"
+                                 width="120" height="120" style="object-fit: cover;">
+                        {% else %}
+                            <img src="" id="avatarPreview" style="display:none;"
+                                 class="rounded-circle border border-2 border-secondary"
+                                 width="120" height="120" style="object-fit: cover;">
+                            <i class="bi bi-person-circle" id="avatarPlaceholder"
+                               style="font-size: 120px; color: #555;"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <label class="form-label">Загрузить новый аватар</label>
+                        {{ profile_form.avatar }}
+                        {% if profile_form.avatar.errors %}
+                            <div class="text-danger small mt-1">{{ profile_form.avatar.errors|striptags }}</div>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">PNG, JPG до 5 МБ</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основные данные -->
+            <div class="card p-4 mb-3">
+                <h5 class="mb-3">Основные данные</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Имя</label>
+                        {{ user_form.first_name }}
+                        {% if user_form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ user_form.first_name.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Фамилия</label>
+                        {{ user_form.last_name }}
+                        {% if user_form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ user_form.last_name.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Email</label>
+                        {{ user_form.email }}
+                        {% if user_form.email.errors %}
+                            <div class="text-danger small mt-1">{{ user_form.email.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Телефон</label>
+                        {{ profile_form.phone }}
+                        {% if profile_form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ profile_form.phone.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Дата рождения</label>
+                        {{ profile_form.birth_date }}
+                        {% if profile_form.birth_date.errors %}
+                            <div class="text-danger small mt-1">{{ profile_form.birth_date.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">О себе</label>
+                        {{ profile_form.bio }}
+                        {% if profile_form.bio.errors %}
+                            <div class="text-danger small mt-1">{{ profile_form.bio.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> Сохранить
+                </button>
+                <a href="{% url 'movies:profile' %}" class="btn btn-outline-light">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Превью аватара до загрузки
+    const input = document.querySelector('input[type="file"]');
+    const preview = document.getElementById('avatarPreview');
+    const placeholder = document.getElementById('avatarPlaceholder');
+    if (input && preview) {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.style.display = 'block';
+                    if (placeholder) placeholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+</script>
+{% endblock %}

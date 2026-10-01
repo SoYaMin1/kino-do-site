@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Все фильмы{% endblock %}
+
+{% block content %}
+
+<!-- 🎞️ КАРУСЕЛЬ -->
+{% if featured_movies and not query and not current_genre %}
+<div id="featuredCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        {% for movie in featured_movies %}
+            <button type="button" data-bs-target="#featuredCarousel" 
+                    data-bs-slide-to="{{ forloop.counter0 }}" 
+                    {% if forloop.first %}class="active"{% endif %}></button>
+        {% endfor %}
+    </div>
+    <div class="carousel-inner rounded">
+        {% for movie in featured_movies %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}" data-bs-interval="5000">
+            <div class="position-relative" style="height: 480px; overflow: hidden;">
+                <img src="{{ movie.poster.url }}" 
+                     class="d-block w-100" 
+                     style="object-fit: cover; filter: brightness(0.4); height: 480px;"
+                     alt="{{ movie.title }}">
+                <div class="carousel-caption d-none d-md-block text-start" style="bottom: 60px;">
+                    <h1 class="display-4 fw-bold">{{ movie.title }}</h1>
+                    <p class="fs-5">
+                        {{ movie.year }} • {{ movie.country }} • ★ {{ movie.rating }}/10
+                    </p>
+                    <p class="mb-3">{{ movie.description|truncatewords:25 }}</p>
+                    <a href="{{ movie.get_absolute_url }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-play-fill"></i> Смотреть
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#featuredCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#featuredCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>
+{% endif %}
+
+<!-- Заголовок -->
+<h2 class="mb-3">
+    {% if query %}Результаты поиска: «{{ query }}»
+    {% elif current_genre %}Фильмы жанра
+    {% else %}Все фильмы{% endif %}
+</h2>
+
+<!-- Фильтры -->
+<div class="row mb-4 g-2">
+    <div class="col-md-8">
+        <a href="{% url 'movies:movie_list' %}" 
+           class="btn btn-sm {% if not current_genre %}btn-primary{% else %}btn-outline-light{% endif %}">Все</a>
+        {% for genre in genres %}
+            <a href="?genre={{ genre.slug }}{% if current_sort %}&sort={{ current_sort }}{% endif %}" 
+               class="btn btn-sm {% if current_genre == genre.slug %}btn-primary{% else %}btn-outline-light{% endif %}">
+                {{ genre.name }}
+            </a>
+        {% endfor %}
+    </div>
+    <div class="col-md-4">
+        <form method="get" id="sortForm">
+            {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+            {% if current_genre %}<input type="hidden" name="genre" value="{{ current_genre }}">{% endif %}
+            <select name="sort" class="form-select" onchange="document.getElementById('sortForm').submit()">
+                {% for value, label in sort_options.items %}
+                    <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>
+                        Сортировка: {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<!-- Сетка фильмов -->
+<div class="row g-4">
+    {% for movie in page_obj %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <div class="card h-100">
+            <a href="{{ movie.get_absolute_url }}">
+                {% if movie.poster %}
+                    <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" 
+                         style="height: 380px; object-fit: cover;">
+                {% endif %}
+            </a>
+            <div class="card-body d-flex flex-column">
+                <h6 class="card-title">{{ movie.title }}</h6>
+                <p class="text-muted small mb-2">{{ movie.year }} • {{ movie.country }}</p>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="rating-badge">{{ movie.rating }}</span>
+                    <a href="{{ movie.get_absolute_url }}" class="btn btn-sm btn-primary">Смотреть</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12"><p class="text-center">Фильмы не найдены 😔</p></div>
+    {% endfor %}
+</div>
+
+<!-- Пагинация -->
+{% if page_obj.has_other_pages %}
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_genre %}&genre={{ current_genre }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">&laquo;</a>
+            </li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if current_genre %}&genre={{ current_genre }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+            </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_genre %}&genre={{ current_genre }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">&raquo;</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

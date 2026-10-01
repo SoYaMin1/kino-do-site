@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Просмотренные{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-eye-fill" style="color:#f0ad4e"></i> Просмотренные фильмы</h1>
+    <a href="{% url 'movies:profile' %}" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left"></i> Назад
+    </a>
+</div>
+
+<div class="row g-4">
+    {% for w in watched %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <div class="card h-100">
+            <a href="{{ w.movie.get_absolute_url }}">
+                <img src="{{ w.movie.poster.url }}" class="card-img-top" 
+                     style="height: 380px; object-fit: cover;" alt="{{ w.movie.title }}">
+            </a>
+            <div class="card-body d-flex flex-column">
+                <h6 class="card-title">{{ w.movie.title }}</h6>
+                <p class="text-muted small mb-2">
+                    Просмотрено: {{ w.watched_at|date:"d.m.Y" }}
+                </p>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="rating-badge">{{ w.movie.rating }}</span>
+                    <form method="post" action="{% url 'movies:toggle_watched' w.movie.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Убрать из просмотренных">
+                            <i class="bi bi-eye-slash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-eye" style="font-size: 4rem; color: #444;"></i>
+        <p class="text-muted mt-3">Вы ещё не отмечали просмотренные фильмы</p>
+        <a href="{% url 'movies:movie_list' %}" class="btn btn-primary">Смотреть фильмы</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
